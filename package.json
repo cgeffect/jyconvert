@@ -73,6 +73,9 @@
           "to": "."
         }
       ]
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-win-${arch}.${ext}"
     }
   },
   "devDependencies": {
