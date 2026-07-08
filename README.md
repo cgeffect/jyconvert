@@ -66,24 +66,64 @@
 
 ## 系统支持与安装说明
 
+> jyconvert 是**本地桌面工具**，未做 Apple / 微软官方签名（签名证书费用较高）。首次打开时系统可能弹出安全提示，**不代表有病毒**，按下面步骤操作即可。请**只从上方 [Releases](https://github.com/cgeffect/jyconvert/releases) 页面下载**，勿使用第三方转载的安装包。
+
 ### macOS（Apple 芯片 / arm64）
 
 | 项目 | 说明 |
 |------|------|
-| 支持芯片 | Apple Silicon（M 系列），**不支持 Intel Mac** |
+| 支持芯片 | Apple Silicon（M1 / M2 / M3 等），**不支持 Intel Mac** |
 | 系统版本 | 建议 macOS 12 及以上 |
-| 安装方式 | 打开 `.dmg`，把 jyconvert 拖进「应用程序」 |
-| 首次打开被拦截 | 本应用暂未做 Apple 官方签名。请 **右键图标 → 打开**，或在「系统设置 → 隐私与安全性」里点「仍要打开」 |
+| 推荐下载 | `jyconvert-x.y.z-arm64.dmg`（也可选 `.zip`，解压后直接运行 `jyconvert.app`） |
 | 剪映草稿目录 | 通常自动识别 `~/Movies/JianyingPro/.../com.lveditor.draft` |
+
+不确定自己的 Mac 是哪种芯片？点左上角 **苹果菜单 → 关于本机**，处理器一栏显示 **Apple M 系列** 即适用本版本。
+
+**安装（DMG，推荐）：**
+
+1. 打开 `.dmg`，把 `jyconvert.app` 拖到你想放的位置（「应用程序」、桌面、下载文件夹均可）
+2. 首次打开时，macOS 可能拦截并提示「无法验证开发者」：
+   - **方法一**：右键 `jyconvert.app` → **打开** → 确认打开
+   - **方法二**：打开 **系统设置 → 隐私与安全性**，找到被拦截提示，点 **「仍要打开」**
+
+**提示「已损坏，无法打开」：**
+
+从网页下载的未签名 App 有时会被 macOS 加上隔离标记。在 **终端** 执行（路径换成你电脑上 `jyconvert.app` 的实际位置）：
+
+```bash
+xattr -cr /你的路径/jyconvert.app
+```
+
+快捷做法：在终端输入 `xattr -cr `（末尾保留一个空格），把 `jyconvert.app` **拖进终端窗口**自动填入路径，按回车。然后重新打开 App。
 
 ### Windows（64 位）
 
 | 项目 | 说明 |
 |------|------|
-| 支持架构 | x64（64 位 Windows） |
-| 安装方式 | 运行 `jyconvert-x.y.z-win-x64.exe`，按向导安装 |
-| 安全提示 | 未签名的应用可能触发 **SmartScreen「未知发布者」** 提示。若你信任本软件来源，可点「更多信息」→「仍要运行」 |
-| 剪映草稿目录 | 安装位置因用户而异，导入前请在 App 里 **手动选择** 剪映草稿文件夹（一般为 `%LOCALAPPDATA%\JianyingPro\User Data\Projects\com.lveditor.draft`） |
+| 支持系统 | Windows 10 / 11（**64 位 x64**），不支持 32 位 |
+| 推荐下载 | `jyconvert-x.y.z-win-x64.exe`（安装包）；`.zip` 为解压版，可直接运行 |
+| 剪映草稿目录 | 安装位置因用户而异，导入前请在 App 里 **手动选择**（一般为 `%LOCALAPPDATA%\JianyingPro\User Data\Projects\com.lveditor.draft`） |
+
+**安装步骤：**
+
+1. 从 [Releases](https://github.com/cgeffect/jyconvert/releases) 下载 `jyconvert-x.y.z-win-x64.exe`
+2. 双击运行，按安装向导完成（也可选自定义安装目录）
+3. 从开始菜单或桌面快捷方式启动 jyconvert
+
+**首次运行被 SmartScreen 拦截：**
+
+Windows 可能弹出 **「Windows 已保护你的电脑」** 或「未知发布者」提示（因安装包未购买代码签名证书，并非说明软件有问题）：
+
+1. 点 **「更多信息」**
+2. 点 **「仍要运行」**
+
+**杀毒软件误报：**
+
+部分杀毒软件会对未签名的 Electron 应用误报。若确认从 GitHub 官方 Release 下载，可将 jyconvert 安装目录加入杀毒软件的**信任/排除列表**，然后重新安装。
+
+**下载不完整：**
+
+若安装包只有几 KB 或无法运行，说明下载中断或损坏，请重新从 Release 页面下载（安装包约 **170 MB**）。
 
 ---
 
@@ -108,15 +148,21 @@ jyconvert 是**本地工具**，转换和下载都在你的电脑上完成，不
 ## 常见问题
 
 **Q：Mac 提示「无法打开，因为无法验证开发者」？**  
-A：右键 App →「打开」，或在系统设置里允许一次即可。
+A：见上文 macOS 安装说明：右键 →「打开」，或在「隐私与安全性」里点「仍要打开」。
+
+**Q：Mac 提示「jyconvert 已损坏，无法打开」？**  
+A：对实际路径执行 `xattr -cr`（可把 App 拖进终端自动填路径），见上文 macOS 安装说明。
 
 **Q：Windows 提示「Windows 已保护你的电脑」？**  
-A：点「更多信息」→「仍要运行」。请只从上方 [Releases](https://github.com/cgeffect/jyconvert/releases) 页面下载。
+A：点「更多信息」→「仍要运行」。请只从 [Releases](https://github.com/cgeffect/jyconvert/releases) 官方页面下载。
+
+**Q：杀毒软件报毒 / 拦截？**  
+A：未签名桌面应用可能被误报。确认官方下载来源后，将安装目录加入信任列表。
 
 **Q：导入后剪映里看不到草稿？**  
 A：检查第三步的「剪映草稿目录」是否选对，然后重启剪映。
 
-**Q：需要单独安装 ffmpeg 吗？**  
+**Q：需要单独安装 ffmpeg、Python 吗？**  
 A：不需要，已内嵌在 App 里。
 
 ---
