@@ -1,6 +1,6 @@
 {
   "name": "jyconvert",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "项目预览页素材包 → 剪映草稿（Electron 桌面工具）",
   "main": "electron/main.js",
   "scripts": {
@@ -39,7 +39,10 @@
     "mac": {
       "category": "public.app-category.video",
       "icon": "assets/icon.png",
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "extraResources": [
         {
           "from": "bin/jyconvert-py",
@@ -58,7 +61,10 @@
     "win": {
       "icon": "assets/icon.png",
       "artifactName": "${productName}-${version}-win-${arch}.${ext}",
-      "target": ["nsis", "zip"],
+      "target": [
+        "nsis",
+        "zip"
+      ],
       "extraResources": [
         {
           "from": "bin/jyconvert-py.exe",
