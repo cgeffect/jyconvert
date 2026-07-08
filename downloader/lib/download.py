@@ -81,7 +81,8 @@ def _bundled_ytdlp_candidates() -> list[Path]:
         candidates.append(Path(env_path))
 
     candidates.append(jyconvert_root / "bin" / "yt-dlp.app" / bin_name)
-    candidates.append(jyconvert_root / "bin" / bin_name)
+    if os.name != "nt":
+        candidates.append(jyconvert_root / "bin" / bin_name)
     return candidates
 
 

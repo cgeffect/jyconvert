@@ -51,10 +51,16 @@ function bundledYtdlpBinary() {
 
   if (app.isPackaged) {
     candidates.push(path.join(process.resourcesPath, "yt-dlp.app", name));
-    candidates.push(path.join(process.resourcesPath, name));
   } else {
     candidates.push(path.resolve(__dirname, "../../bin/yt-dlp.app", name));
-    candidates.push(path.resolve(__dirname, "../../bin", name));
+  }
+
+  if (process.platform !== "win32") {
+    if (app.isPackaged) {
+      candidates.push(path.join(process.resourcesPath, name));
+    } else {
+      candidates.push(path.resolve(__dirname, "../../bin", name));
+    }
   }
 
   for (const candidate of candidates) {
