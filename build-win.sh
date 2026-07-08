@@ -61,7 +61,7 @@ build_ytdlp
 build_ffmpeg
 
 echo "==> [4/5] 打包 Electron App (Windows)"
-npx electron-builder --win
+npx electron-builder --win --publish never
 
 echo ""
 echo "==> [5/5] 完成"

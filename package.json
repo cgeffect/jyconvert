@@ -19,6 +19,7 @@
     "appId": "com.nglengine.jyconvert",
     "productName": "jyconvert",
     "icon": "assets/icon.png",
+    "publish": null,
     "files": [
       "electron/**/*",
       "renderer/**/*"

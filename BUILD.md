@@ -76,7 +76,7 @@ chmod +x build-mac.sh
 ```bash
 npm run build:python   # 仅打包 Python 后端
 npm run build:ytdlp    # 仅打包 yt-dlp
-npx electron-builder --mac
+npx electron-builder --mac --publish never
 ```
 
 ### macOS 产物

@@ -61,7 +61,7 @@ build_ytdlp
 build_ffmpeg
 
 echo "==> [4/5] 打包 Electron App (macOS)"
-npx electron-builder --mac
+npx electron-builder --mac --publish never
 
 echo ""
 echo "==> [5/5] 完成"
