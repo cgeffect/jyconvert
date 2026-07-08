@@ -72,6 +72,16 @@ jobs:
       - name: List release files
         run: find artifacts -type f | sort
 
+      - name: Remove stale release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          ASSET_IDS=$(gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets[].id' 2>/dev/null || true)
+          for id in $ASSET_IDS; do
+            [ -n "$id" ] && gh api --method DELETE "/repos/${{ github.repository }}/releases/assets/${id}"
+          done
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
