@@ -1,0 +1,71 @@
+node_modules/
+dist/
+out/
+*.log
+.DS_Store
+bin/jyconvert-py
+bin/jyconvert-py.exe
+python/.venv/
+python/build/
+python/dist/
+# CapCut 导出工具运行时可能创建，勿提交
+python/User Data/
+python/manifest.json
+
+
+/.cache/
+/build/
+/build-test/
+.DS_Store
+compile_commands.json
+/build-*/
+/res/
+/output/
+/font_parse/build/
+/*/**/__pycache__/
+/utest/**/*.mp4
+!/utest/resources/transform.mp4
+!/utest/resources/standard.mp4
+/utest/coverage/
+/.trae/
+/Xcode/
+/3rdparty/deprecated/
+
+# WASM / Emscripten 构建产物
+*.wasm
+*.data
+
+# NGL Web preview runtime：大体积产物由 build-wasm.sh 生成，不纳入版本库
+web/modules/ngl-wasm/dist/*.wasm
+web/modules/ngl-wasm/dist/*.data
+web/modules/ngl-wasm/dist/*.js
+**/libNGLEngine.wasm
+**/libNGLEngine.data
+**/libNGLEngine.js
+
+# Web 预览：wasm 本地 build-wasm.sh 生成，不纳入版本库
+/web/libNGLEngine.wasm
+/web/libNGLEngine.data
+/web/libNGLEngine.js
+
+/web/node_modules/
+/web/dist/
+
+/**/*/libpag*.zip
+
+# x264 本地解包/构建目录，deploy 产物按需单独管理
+/3rdparty_wasm/ffmpeg/deps/x264/source/x264/
+
+/utest/output/
+
+/__pycache__
+/examples/
+/node_modules/
+/dist/
+/python/**/__pycache__/
+/bin/
+/bin/yt-dlp.app/
+
+/3rdparty_wasm/libpag/.emscripten_cache/
+/3rdparty_wasm/.emscripten_cache-3.1.71/
+/3rdparty_wasm/.emscripten_cache-5.0.7/

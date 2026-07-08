@@ -1,0 +1,13 @@
+# PyInstaller 构建产物
+build/
+dist/
+
+# 本地测试下载产物
+output/
+
+# Python venv
+.venv/
+.venv-ytdlp/
+
+# yt-dlp 缓存
+.cache/

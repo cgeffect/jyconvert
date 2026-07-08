@@ -1,0 +1,56 @@
+{
+  "name": "jyconvert",
+  "version": "0.1.0",
+  "description": "NGLEngine 素材包 → 剪映草稿（Electron 桌面工具）",
+  "main": "electron/main.js",
+  "scripts": {
+    "build:python": "bash build.sh --python-only",
+    "build:ytdlp": "bash build.sh --ytdlp-only",
+    "prestart": "bash build.sh --ytdlp-only",
+    "start": "electron .",
+    "predist": "npm run build:python && npm run build:ytdlp",
+    "dist": "electron-builder --mac",
+    "test:python": "python3 python/tests/test_rich_text.py"
+  },
+  "build": {
+    "appId": "com.nglengine.jyconvert",
+    "productName": "jyconvert",
+    "icon": "assets/icon.png",
+    "mac": {
+      "category": "public.app-category.video",
+      "icon": "assets/icon.png",
+      "target": ["dmg", "zip"]
+    },
+    "files": [
+      "electron/**/*",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "bin/jyconvert-py",
+        "to": "."
+      },
+      {
+        "from": "bin/yt-dlp.app",
+        "to": "yt-dlp.app"
+      },
+      {
+        "from": "downloader",
+        "to": "downloader",
+        "filter": [
+          "**/*",
+          "!.venv/**",
+          "!output/**",
+          "!.cache/**"
+        ]
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  }
+}

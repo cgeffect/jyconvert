@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>jyconvert</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <h1>jyconvert</h1>
+      <p>Chrome 素材包 → 剪映草稿</p>
+    </div>
+    <button type="button" id="btn-open-downloader" class="btn-header">视频下载</button>
+  </header>
+
+  <main class="pipeline-main">
+    <!-- Success state -->
+    <section id="success-view" class="success-view hidden" aria-live="polite">
+      <div class="success-icon" aria-hidden="true">✓</div>
+      <h2 class="success-title">导入完成</h2>
+      <p id="success-subtitle" class="success-subtitle"></p>
+      <dl id="success-meta" class="success-meta"></dl>
+      <ul class="success-tips">
+        <li>若剪映草稿列表未刷新，请重启剪映</li>
+        <li>请在剪映中打开此草稿，但<strong>不要在剪映里再次保存</strong>（会加密导致无法二次编辑）</li>
+      </ul>
+      <div class="success-actions">
+        <button type="button" id="btn-success-open" class="btn-primary">打开剪映草稿文件夹</button>
+        <button type="button" id="btn-success-next" class="btn-secondary">处理下一个</button>
+      </div>
+    </section>
+
+    <!-- Pipeline -->
+    <div id="pipeline-view" class="pipeline">
+      <!-- Card 1: 素材包 -->
+      <article class="pipe-card active" id="card-package" data-stage="package">
+        <header class="pipe-card-head">
+          <span class="pipe-status" aria-hidden="true">1</span>
+          <div class="pipe-card-titles">
+            <h2>素材包</h2>
+            <p id="package-summary" class="pipe-summary hidden"></p>
+          </div>
+        </header>
+        <div class="pipe-card-body" id="package-body">
+          <div id="drop-zone" class="drop-zone">
+            <div class="drop-zone-inner">
+              <span class="drop-icon" aria-hidden="true">↓</span>
+              <p class="drop-title">把 Chrome 下载的 <code>.zip</code> 拖到这里</p>
+              <p class="drop-help">
+                还没有素材包？
+                <button type="button" id="btn-download-help" class="btn-link">前往项目预览页下载</button>
+              </p>
+              <p class="drop-sub">或</p>
+              <button type="button" id="btn-pick" class="btn-secondary">选择压缩包</button>
+            </div>
+          </div>
+          <details id="package-details" class="path-details hidden">
+            <summary>查看路径详情</summary>
+            <div id="package-paths" class="path-list"></div>
+          </details>
+        </div>
+        <div class="pipe-card-collapsed hidden" id="package-collapsed">
+          <span id="package-collapsed-name" class="collapsed-label"></span>
+          <button type="button" id="btn-change-zip" class="btn-link">更换文件</button>
+        </div>
+      </article>
+
+      <!-- Card 2: 转换 -->
+      <article class="pipe-card locked" id="card-convert" data-stage="convert">
+        <header class="pipe-card-head">
+          <span class="pipe-status" aria-hidden="true">2</span>
+          <div class="pipe-card-titles">
+            <h2>转换草稿</h2>
+            <p id="convert-summary" class="pipe-summary hidden"></p>
+          </div>
+        </header>
+        <div class="pipe-card-body hidden" id="convert-body">
+          <label class="field">
+            <span class="field-label">草稿名称</span>
+            <input id="draft-name" type="text" placeholder="例如 converted_protocol_draft" />
+          </label>
+          <details class="path-details" id="convert-advanced">
+            <summary>高级选项</summary>
+            <label class="field field-check">
+              <input id="use-different-import-name" type="checkbox" />
+              <span>导入剪映时使用不同名称</span>
+            </label>
+            <label class="field hidden" id="jianying-name-field">
+              <span class="field-label">剪映列表中的名称</span>
+              <input id="jianying-name" type="text" placeholder="剪映草稿列表中的名称" />
+            </label>
+          </details>
+          <details class="path-details hidden" id="convert-output-details">
+            <summary>输出路径</summary>
+            <div id="convert-output-paths" class="path-list"></div>
+          </details>
+          <div id="convert-status" class="status-msg hidden"></div>
+        </div>
+      </article>
+
+      <!-- Card 3: 导入 -->
+      <article class="pipe-card locked" id="card-import" data-stage="import">
+        <header class="pipe-card-head">
+          <span class="pipe-status" aria-hidden="true">3</span>
+          <div class="pipe-card-titles">
+            <h2>导入剪映</h2>
+            <p id="import-summary-line" class="pipe-summary hidden"></p>
+          </div>
+        </header>
+        <div class="pipe-card-body hidden" id="import-body">
+          <p class="hint">将本地草稿写入剪映目录，列表中显示的名称由「草稿名称」决定。</p>
+          <details class="path-details hidden" id="import-path-details">
+            <summary>路径详情</summary>
+            <div id="import-paths" class="path-list"></div>
+          </details>
+          <div id="import-status" class="status-msg hidden"></div>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="action-bar">
+    <p id="action-hint" class="action-hint"></p>
+    <button type="button" id="btn-primary" class="btn-primary btn-primary-large">选择压缩包</button>
+  </footer>
+
+  <footer class="log-footer">
+    <div class="log-header">
+      <button type="button" id="btn-toggle-log" class="log-toggle" aria-expanded="false">
+        运行日志
+        <span class="chevron">▸</span>
+      </button>
+      <button type="button" id="btn-copy-log" class="btn-link log-copy hidden">复制</button>
+    </div>
+    <p id="log-summary" class="log-summary"></p>
+    <pre id="log" class="log-body collapsed"></pre>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>视频下载</title>
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="dl-page">
+  <header class="dl-header">
+    <div>
+      <h1>下载抖音视频</h1>
+      <p>在抖音 App 里点「分享 → 复制链接」，粘贴到下面即可</p>
+    </div>
+  </header>
+
+  <main class="dl-main">
+    <section class="dl-step">
+      <div class="dl-step-title">
+        <span class="dl-step-num">1</span>
+        <span>先登录抖音</span>
+      </div>
+      <p class="dl-step-desc">第一次使用需要登录一次，之后会自动记住</p>
+      <button type="button" id="btn-douyin-login" class="btn-primary btn-step">打开抖音登录</button>
+      <p id="cookie-status" class="field-hint cookie-status"></p>
+    </section>
+
+    <section class="dl-input-section dl-step">
+      <div class="dl-step-title">
+        <span class="dl-step-num">2</span>
+        <span>粘贴要下载的内容</span>
+      </div>
+      <p class="dl-step-desc">支持一次粘贴多个，<strong>每个视频占一行</strong></p>
+      <div class="dl-input-meta">
+        <div class="dl-input-example">
+          <span class="dl-input-example-label">示例</span>
+          <pre class="dl-input-example-text">7.48 复制打开抖音… https://v.douyin.com/aaa/
+7.48 复制打开抖音… https://v.douyin.com/bbb/</pre>
+        </div>
+        <button type="button" id="btn-input-fullscreen" class="btn-secondary btn-inline">全屏查看</button>
+      </div>
+      <label class="field dl-input-field">
+        <textarea
+          id="input-text"
+          placeholder="把抖音分享口令粘贴到这里"
+        ></textarea>
+      </label>
+      <div id="extract-preview" class="extract-preview hidden"></div>
+    </section>
+
+    <section class="dl-step">
+      <div class="dl-step-title">
+        <span class="dl-step-num">3</span>
+        <span>视频保存位置</span>
+      </div>
+      <div class="field-row">
+        <label class="field field-grow">
+          <input id="output-dir" type="text" readonly />
+        </label>
+        <button type="button" id="btn-pick-dir" class="btn-secondary">更改</button>
+      </div>
+    </section>
+
+    <details class="dl-advanced">
+      <summary>下载不成功？点这里查看高级设置</summary>
+      <div class="dl-advanced-body">
+        <p class="field-hint">一般不需要改这些。只有登录后仍无法下载时再试。</p>
+        <div class="cookie-options">
+          <label class="field field-check">
+            <input id="use-cookies" type="checkbox" checked />
+            <span>尝试读取电脑浏览器里的抖音登录信息</span>
+          </label>
+          <select id="cookies-browser" class="cookie-select">
+            <option value="chrome" selected>Chrome</option>
+            <option value="safari">Safari</option>
+            <option value="edge">Edge</option>
+          </select>
+        </div>
+        <div class="cookie-actions">
+          <button type="button" id="btn-import-session-cookies" class="btn-secondary btn-inline">重新同步登录</button>
+          <button type="button" id="btn-check-cookies" class="btn-secondary btn-inline">检查浏览器登录</button>
+        </div>
+        <div class="field-row">
+          <label class="field field-grow">
+            <span class="field-label">手动选择登录信息文件（很少需要）</span>
+            <input id="cookies-file" type="text" readonly placeholder="未选择" />
+          </label>
+          <button type="button" id="btn-pick-cookies" class="btn-secondary">选择</button>
+          <button type="button" id="btn-clear-cookies" class="btn-secondary btn-ghost">清除</button>
+        </div>
+        <p class="field-hint">
+          如需手动导出登录信息，可使用
+          <a href="#" id="link-cookies-ext">这个浏览器插件</a>
+        </p>
+      </div>
+    </details>
+
+    <section class="dl-output-section">
+      <div id="progress-box" class="progress-box hidden">
+        <p id="progress-summary" class="progress-summary"></p>
+        <div id="progress-list" class="progress-list"></div>
+      </div>
+      <div id="result-box" class="result-box hidden"></div>
+      <div id="status" class="status-msg hidden"></div>
+    </section>
+  </main>
+
+  <footer class="dl-footer">
+    <button type="button" id="btn-download" class="btn-primary">开始下载</button>
+  </footer>
+
+  <div id="input-fullscreen" class="input-fullscreen hidden" aria-hidden="true">
+    <div class="input-fullscreen-header">
+      <div>
+        <strong>粘贴内容</strong>
+        <p class="input-fullscreen-hint">每个视频占一行</p>
+      </div>
+      <button type="button" id="btn-input-fullscreen-close" class="btn-primary">完成</button>
+    </div>
+    <textarea id="input-text-fullscreen" placeholder="把抖音分享口令粘贴到这里"></textarea>
+  </div>
+
+  <script src="batch-input.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
