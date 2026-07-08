@@ -22,8 +22,8 @@ jobs:
           - os: windows-latest
             build_script: build-win.sh
             artifact_glob: |
-              dist/*.exe
-              dist/*-win.zip
+              dist/jyconvert-*-win-x64.exe
+              dist/jyconvert-*-win-x64.zip
 
     runs-on: ${{ matrix.os }}
 

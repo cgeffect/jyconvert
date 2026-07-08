@@ -66,4 +66,4 @@ npx electron-builder --win --publish never
 echo ""
 echo "==> [5/5] 完成"
 echo "  程序: $ROOT/dist/win-unpacked/jyconvert.exe"
-echo "  安装包: $ROOT/dist/jyconvert Setup "*.exe
+echo "  安装包: $ROOT/dist/jyconvert-"*"-win-x64.exe"

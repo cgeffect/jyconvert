@@ -57,6 +57,7 @@
     },
     "win": {
       "icon": "assets/icon.png",
+      "artifactName": "${productName}-${version}-win-${arch}.${ext}",
       "target": ["nsis", "zip"],
       "extraResources": [
         {
