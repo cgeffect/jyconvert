@@ -122,5 +122,5 @@ jyconvert/
 
 ## 相关文档
 
-- [BUILD.md](BUILD.md) — 本地开发、打包 Python、构建 Mac / Windows App
+- [BUILD.md](BUILD.md) — 本地开发、打包 Python、构建 Mac / Windows App、GitHub 发版
 - [docs/jianying-draft.md](docs/jianying-draft.md) — 剪映草稿加密原理

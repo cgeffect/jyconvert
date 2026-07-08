@@ -101,6 +101,43 @@ open dist/mac-arm64/jyconvert.app
 
 ---
 
+## GitHub 自动发版
+
+推送 `v*` 标签后，GitHub Actions 会自动在 Mac / Windows 上打包，并把安装包上传到 [GitHub Releases](https://github.com/cgeffect/jyconvert/releases)。
+
+### 发布新版本
+
+```bash
+# 1. 更新 package.json 中的 version（如 0.1.0 → 0.2.0）
+
+# 2. 提交并打标签
+git add package.json package-lock.json
+git commit -m "chore: bump version to 0.2.0"
+git tag v0.2.0
+git push origin master
+git push origin v0.2.0
+```
+
+推送标签后，在仓库 **Actions** 页查看 `Release` workflow。完成后，用户可在 Releases 页面下载：
+
+| 平台 | 产物 |
+|------|------|
+| macOS (arm64) | `jyconvert-x.y.z-arm64.dmg`、`.zip` |
+| Windows | `jyconvert Setup x.y.z.exe`、`.zip` |
+
+### 手动发布（不用 CI）
+
+本地打包后，也可手动上传到 GitHub Releases：
+
+```bash
+./build-mac.sh
+gh release create v0.1.0 dist/jyconvert-0.1.0-arm64.dmg \
+  --title "v0.1.0" \
+  --notes "首个 Mac 可下载版本"
+```
+
+---
+
 ## 打包 Windows App
 
 在 **Windows 机器**上，用 **Git Bash** 或 **MSYS2** 执行：
