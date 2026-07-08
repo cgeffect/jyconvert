@@ -199,7 +199,7 @@ function updatePrimaryAction() {
     [STAGE.IDLE]: {
       label: "选择压缩包",
       disabled: false,
-      hint: "拖入或选择 Chrome 下载的 zip 素材包",
+      hint: "拖入或选择项目预览页下载的 zip 素材包",
       action: "pick",
     },
     [STAGE.READY]: {

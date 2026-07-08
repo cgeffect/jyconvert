@@ -149,7 +149,7 @@ function createWindow() {
 
 ipcMain.handle("pick-zip", async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
-    title: "选择 Chrome 下载的素材包",
+    title: "选择项目预览页下载的素材包",
     properties: ["openFile"],
     filters: [{ name: "压缩包", extensions: ["zip"] }],
   });

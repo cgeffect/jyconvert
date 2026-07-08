@@ -1,6 +1,6 @@
 # jyconvert
 
-桌面小工具，帮你做两件事：**把 Chrome 下载的素材包转成剪映草稿**，以及**下载抖音视频**。下载安装包即可使用，无需自己装 Python、ffmpeg 等环境。
+桌面小工具，帮你做两件事：**把[项目预览页](https://agent.tfwang.top/#/project-preview)下载的素材包转成剪映草稿**，以便在剪映里二次编辑；以及**下载抖音视频**。下载安装包即可使用，无需自己装 Python、ffmpeg 等环境。
 
 ---
 
@@ -21,14 +21,18 @@
 
 ## 功能一：剪映格式转换
 
-把 Chrome 项目预览页下载的 **素材包 `.zip`** 转成剪映 Pro 能打开的草稿，并一键导入剪映。
+把 [项目预览页](https://agent.tfwang.top/#/project-preview) 下载的 **素材包 `.zip`** 转成剪映 Pro 能打开的草稿，并一键导入剪映，方便在剪映里继续编辑。
+
+### 素材从哪里来
+
+在浏览器打开 **[https://agent.tfwang.top/#/project-preview](https://agent.tfwang.top/#/project-preview)**，进入项目预览页，下载导出的素材包（`.zip`）。
 
 ![剪映格式转换](assets/jy_convert.webp)
 
 ### 怎么用
 
 1. 打开 jyconvert
-2. 把 Chrome 下载的 `.zip` **拖进窗口**，或点「选择压缩包」
+2. 把从项目预览页下载的 `.zip` **拖进窗口**，或点「选择压缩包」
 3. 填写**草稿名称**，点「开始转换」
 4. 确认**剪映草稿目录**（Mac 一般会自动填好），点「导入剪映」
 5. 打开剪映，在草稿列表里找到刚导入的项目
