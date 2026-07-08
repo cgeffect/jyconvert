@@ -74,10 +74,29 @@ function assertYtdlpReady() {
   );
 }
 
+function bundledFfmpegBinary() {
+  const name = process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
+  const candidates = [];
+
+  if (app.isPackaged) {
+    candidates.push(path.join(process.resourcesPath, name));
+  } else {
+    candidates.push(path.resolve(__dirname, "../../bin", name));
+  }
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 module.exports = {
   pythonRoot,
   bundledPythonBinary,
   bundledYtdlpBinary,
+  bundledFfmpegBinary,
   pythonCommand,
   assertPythonReady,
   assertYtdlpReady,

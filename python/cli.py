@@ -54,7 +54,11 @@ def cmd_import(args: argparse.Namespace) -> None:
     print("=" * 60)
     print("本地剪映草稿 → 剪映 Pro")
     print("=" * 60)
-    dst = import_draft_to_jianying(draft_dir, args.jianying_name)
+    dst = import_draft_to_jianying(
+        draft_dir,
+        args.jianying_name,
+        args.jianying_drafts_root,
+    )
     summarize_draft(dst)
     print("\n✓ 导入完成")
     print(f"  剪映草稿: {dst}")
@@ -74,6 +78,7 @@ def main() -> None:
     p_import = sub.add_parser("import", help="本地草稿 → 剪映 Pro")
     p_import.add_argument("--draft-dir", type=Path, required=True)
     p_import.add_argument("--jianying-name", required=True)
+    p_import.add_argument("--jianying-drafts-root", type=Path, help="剪映草稿根目录（com.lveditor.draft）")
     p_import.set_defaults(func=cmd_import)
 
     args = parser.parse_args()

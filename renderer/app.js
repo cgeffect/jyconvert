@@ -55,6 +55,8 @@ const els = {
   useDifferentImportName: $("use-different-import-name"),
   jianyingNameField: $("jianying-name-field"),
   jianyingName: $("jianying-name"),
+  jianyingDraftsRoot: $("jianying-drafts-root"),
+  btnPickJianyingDir: $("btn-pick-jianying-dir"),
   btnPrimary: $("btn-primary"),
   actionHint: $("action-hint"),
   log: $("log"),
@@ -167,6 +169,10 @@ async function openPath(targetPath) {
   } catch (err) {
     appendLog(err.message, true);
   }
+}
+
+function getJianyingDraftsRootValue() {
+  return els.jianyingDraftsRoot.value.trim();
 }
 
 function getImportName() {
@@ -330,14 +336,38 @@ function renderConvertPreview() {
   els.convertOutputDetails.classList.remove("hidden");
 }
 
+async function loadJianyingDraftsRoot() {
+  try {
+    const { draftsRoot } = await window.jyconvert.getJianyingDraftsRoot();
+    els.jianyingDraftsRoot.value = draftsRoot || "";
+  } catch (err) {
+    appendLog(err.message, true);
+  }
+}
+
+async function saveJianyingDraftsRoot(raw) {
+  const value = String(raw || "").trim();
+  if (!value) {
+    throw new Error("请选择剪映草稿目录");
+  }
+  const saved = await window.jyconvert.setJianyingDraftsRoot(value);
+  els.jianyingDraftsRoot.value = saved;
+  return saved;
+}
+
 async function renderImportPreview() {
   if (!state.draftDir) {
     return;
   }
   const name = getImportName();
-  const jianyingPath = await window.jyconvert.getJianyingDraftPath(name);
+  const draftsRoot = getJianyingDraftsRootValue();
+  const jianyingPath = await window.jyconvert.getJianyingDraftPath({
+    name,
+    draftsRoot: draftsRoot || undefined,
+  });
   renderPathList(els.importPaths, [
     { label: "本地草稿目录", path: state.draftDir },
+    { label: "剪映草稿根目录", path: draftsRoot || "（未配置）" },
     { label: "剪映草稿路径", path: jianyingPath },
   ]);
   els.importPathDetails.classList.remove("hidden");
@@ -486,14 +516,24 @@ async function handleImport() {
     setStatus(els.importStatus, "请填写草稿名称", "error");
     return;
   }
+  if (!getJianyingDraftsRootValue()) {
+    setStatus(els.importStatus, "请先配置剪映草稿目录", "error");
+    return;
+  }
 
   setStage(STAGE.IMPORTING);
   setStatus(els.importStatus, "正在导入剪映…", "loading");
   els.btnPrimary.disabled = true;
 
   try {
+    const jianyingDraftsRoot = await saveJianyingDraftsRoot(getJianyingDraftsRootValue());
     appendLog(`导入剪映: ${jianyingName}`);
-    const result = await window.jyconvert.importDraft({ draftDir, jianyingName });
+    appendLog(`剪映草稿目录: ${jianyingDraftsRoot}`);
+    const result = await window.jyconvert.importDraft({
+      draftDir,
+      jianyingName,
+      jianyingDraftsRoot,
+    });
     state.importResult = result;
 
     if (result.log) {
@@ -618,6 +658,28 @@ els.jianyingName.addEventListener("input", () => {
   }
 });
 
+els.jianyingDraftsRoot.addEventListener("input", () => {
+  if (state.stage === STAGE.CONVERTED) {
+    renderImportPreview();
+  }
+});
+
+els.btnPickJianyingDir.addEventListener("click", async () => {
+  try {
+    const picked = await window.jyconvert.pickJianyingDraftsDir();
+    if (!picked) {
+      return;
+    }
+    els.jianyingDraftsRoot.value = picked;
+    if (state.stage === STAGE.CONVERTED) {
+      await renderImportPreview();
+    }
+  } catch (err) {
+    setStatus(els.importStatus, err.message, "error");
+    appendLog(err.message, true);
+  }
+});
+
 els.btnSuccessOpen.addEventListener("click", () => {
   if (state.importResult?.jianyingDraftDir) {
     openPath(state.importResult.jianyingDraftDir);
@@ -646,6 +708,7 @@ els.btnCopyLog.addEventListener("click", async () => {
 });
 
 setupDragDrop();
+loadJianyingDraftsRoot();
 
 Promise.all([
   window.jyconvert.getPythonRoot(),

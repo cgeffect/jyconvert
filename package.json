@@ -4,36 +4,26 @@
   "description": "NGLEngine 素材包 → 剪映草稿（Electron 桌面工具）",
   "main": "electron/main.js",
   "scripts": {
-    "build:python": "bash build.sh --python-only",
-    "build:ytdlp": "bash build.sh --ytdlp-only",
-    "prestart": "bash build.sh --ytdlp-only",
+    "build:python": "bash scripts/select-build.sh --python-only",
+    "build:ytdlp": "bash scripts/select-build.sh --ytdlp-only",
+    "build:ffmpeg": "node scripts/fetch-ffmpeg.js",
+    "prestart": "bash scripts/select-build.sh --ytdlp-only && npm run build:ffmpeg",
     "start": "electron .",
-    "predist": "npm run build:python && npm run build:ytdlp",
-    "dist": "electron-builder --mac",
+    "predist": "npm run build:python && npm run build:ytdlp && npm run build:ffmpeg",
+    "dist": "bash scripts/select-build.sh",
+    "dist:mac": "bash build-mac.sh",
+    "dist:win": "bash build-win.sh",
     "test:python": "python3 python/tests/test_rich_text.py"
   },
   "build": {
     "appId": "com.nglengine.jyconvert",
     "productName": "jyconvert",
     "icon": "assets/icon.png",
-    "mac": {
-      "category": "public.app-category.video",
-      "icon": "assets/icon.png",
-      "target": ["dmg", "zip"]
-    },
     "files": [
       "electron/**/*",
       "renderer/**/*"
     ],
     "extraResources": [
-      {
-        "from": "bin/jyconvert-py",
-        "to": "."
-      },
-      {
-        "from": "bin/yt-dlp.app",
-        "to": "yt-dlp.app"
-      },
       {
         "from": "downloader",
         "to": "downloader",
@@ -44,9 +34,47 @@
           "!.cache/**"
         ]
       }
-    ]
+    ],
+    "mac": {
+      "category": "public.app-category.video",
+      "icon": "assets/icon.png",
+      "target": ["dmg", "zip"],
+      "extraResources": [
+        {
+          "from": "bin/jyconvert-py",
+          "to": "."
+        },
+        {
+          "from": "bin/yt-dlp.app",
+          "to": "yt-dlp.app"
+        },
+        {
+          "from": "bin/ffmpeg",
+          "to": "."
+        }
+      ]
+    },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": ["nsis", "zip"],
+      "extraResources": [
+        {
+          "from": "bin/jyconvert-py.exe",
+          "to": "."
+        },
+        {
+          "from": "bin/yt-dlp.app",
+          "to": "yt-dlp.app"
+        },
+        {
+          "from": "bin/ffmpeg.exe",
+          "to": "."
+        }
+      ]
+    }
   },
   "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "electron": "^35.0.0",
     "electron-builder": "^25.1.8"
   },

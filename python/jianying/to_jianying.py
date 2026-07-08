@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from capcut.lib import summarize_draft
 from jianying.convert_lib import convert_protocol_to_local_draft
 from jianying.import_draft import import_draft_to_jianying
-from jianying.lib import JIANYING_ROOT
+from jianying.lib import jianying_drafts_root
 
 
 def main() -> None:
@@ -50,6 +50,11 @@ def main() -> None:
         required=True,
         help="导入后在剪映中显示的草稿名称",
     )
+    parser.add_argument(
+        "--jianying-drafts-root",
+        type=Path,
+        help="剪映草稿根目录（com.lveditor.draft）",
+    )
     args = parser.parse_args()
 
     if not args.protocol.exists():
@@ -69,13 +74,17 @@ def main() -> None:
     )
     summarize_draft(local_draft)
 
-    dst = import_draft_to_jianying(local_draft, args.jianying_name)
+    dst = import_draft_to_jianying(
+        local_draft,
+        args.jianying_name,
+        args.jianying_drafts_root,
+    )
     summarize_draft(dst)
 
     print("\n✓ 完成")
     print(f"  本地草稿: {local_draft}")
     print(f"  剪映草稿: {dst}")
-    print(f"  剪映根目录: {JIANYING_ROOT}")
+    print(f"  剪映草稿根目录: {jianying_drafts_root(args.jianying_drafts_root)}")
 
 
 if __name__ == "__main__":

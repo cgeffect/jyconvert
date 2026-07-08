@@ -255,6 +255,29 @@ body {
 }
 
 /* Fields */
+.field-hint {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.field-grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-row .btn-secondary {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .field {
   display: block;
   margin-bottom: 14px;

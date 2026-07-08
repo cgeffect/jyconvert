@@ -16,6 +16,12 @@ const {
 } = require("./lib/download-video");
 const { pythonRoot } = require("./lib/paths");
 const { writeDownloadIndexCsv } = require("./lib/download-index");
+const {
+  getJianyingDraftsRoot,
+  setJianyingDraftsRoot,
+  detectDefaultDraftsRoot,
+  resolveJianyingDraftDir,
+} = require("./lib/jianying-config");
 
 let mainWindow = null;
 let downloadWindow = null;
@@ -188,7 +194,7 @@ ipcMain.handle("convert-draft", async (_event, { draftName }) => {
   };
 });
 
-ipcMain.handle("import-draft", async (_event, { draftDir, jianyingName }) => {
+ipcMain.handle("import-draft", async (_event, { draftDir, jianyingName, jianyingDraftsRoot }) => {
   if (!draftDir || !draftDir.trim()) {
     throw new Error("请指定草稿目录");
   }
@@ -202,20 +208,21 @@ ipcMain.handle("import-draft", async (_event, { draftDir, jianyingName }) => {
     throw new Error(`草稿不完整: ${dir}`);
   }
 
+  const draftsRoot = jianyingDraftsRoot?.trim()
+    ? setJianyingDraftsRoot(jianyingDraftsRoot.trim())
+    : getJianyingDraftsRoot();
+
   const { stdout, stderr } = await importDraft({
     draftDir: dir,
     jianyingName: name,
+    jianyingDraftsRoot: draftsRoot,
   });
 
-  const jianyingDraftDir = path.join(
-    process.env.HOME || "",
-    "Movies/JianyingPro/User Data/Projects/com.lveditor.draft",
-    name,
-  );
+  const importedDraftDir = resolveJianyingDraftDir(name);
 
   let draftCreatedAt = null;
   let draftDisplayName = name;
-  const metaPath = path.join(jianyingDraftDir, "draft_meta_info.json");
+  const metaPath = path.join(importedDraftDir, "draft_meta_info.json");
   if (fs.existsSync(metaPath)) {
     try {
       const meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
@@ -228,12 +235,12 @@ ipcMain.handle("import-draft", async (_event, { draftDir, jianyingName }) => {
       // ignore parse errors
     }
   }
-  if (!draftCreatedAt && fs.existsSync(jianyingDraftDir)) {
-    draftCreatedAt = fs.statSync(jianyingDraftDir).birthtime.toISOString();
+  if (!draftCreatedAt && fs.existsSync(importedDraftDir)) {
+    draftCreatedAt = fs.statSync(importedDraftDir).birthtime.toISOString();
   }
 
   return {
-    jianyingDraftDir,
+    jianyingDraftDir: importedDraftDir,
     draftName: draftDisplayName,
     draftCreatedAt,
     log: [stdout, stderr].filter(Boolean).join("\n"),
@@ -467,12 +474,32 @@ ipcMain.handle("open-in-finder", async (_event, targetPath) => {
   shell.showItemInFolder(resolved);
 });
 
-ipcMain.handle("jianying-draft-path", (_event, name) => {
-  return path.join(
-    process.env.HOME || "",
-    "Movies/JianyingPro/User Data/Projects/com.lveditor.draft",
-    String(name || "").trim(),
-  );
+ipcMain.handle("get-jianying-drafts-root", () => {
+  return {
+    draftsRoot: getJianyingDraftsRoot(),
+    defaultDraftsRoot: detectDefaultDraftsRoot(),
+  };
+});
+
+ipcMain.handle("set-jianying-drafts-root", (_event, draftsRoot) => {
+  return setJianyingDraftsRoot(draftsRoot);
+});
+
+ipcMain.handle("pick-jianying-drafts-dir", async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: "选择剪映草稿目录",
+    properties: ["openDirectory", "createDirectory"],
+    defaultPath: getJianyingDraftsRoot(),
+    message: "请选择 com.lveditor.draft 文件夹，或剪映安装目录下的 JianyingPro 文件夹",
+  });
+  if (result.canceled || !result.filePaths.length) {
+    return null;
+  }
+  return setJianyingDraftsRoot(result.filePaths[0]);
+});
+
+ipcMain.handle("jianying-draft-path", (_event, { name, draftsRoot } = {}) => {
+  return resolveJianyingDraftDir(name, draftsRoot);
 });
 
 ipcMain.handle("get-python-root", () => pythonRoot());

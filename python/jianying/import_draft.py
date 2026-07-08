@@ -32,7 +32,7 @@ from capcut.lib import (
     walk_replace_paths,
     UUID_PATTERN,
 )
-from jianying.lib import JIANYING_ROOT, jianying_drafts_root
+from jianying.lib import jianying_drafts_root
 
 
 def _same_draft_folder(entry_path: str, draft_dir: Path) -> bool:
@@ -44,16 +44,21 @@ def _same_draft_folder(entry_path: str, draft_dir: Path) -> bool:
         return False
 
 
-def register_in_jianying_root_meta(draft_dir: Path, draft_id: str, draft_name: str) -> None:
+def register_in_jianying_root_meta(
+    draft_dir: Path,
+    draft_id: str,
+    draft_name: str,
+    drafts_root: Path,
+) -> None:
     """在剪映 root_meta_info.json 中注册新草稿。"""
-    root_meta_path = jianying_drafts_root() / "root_meta_info.json"
+    root_meta_path = drafts_root / "root_meta_info.json"
     if root_meta_path.exists():
         root_meta = load_json(root_meta_path)
     else:
         root_meta = {
             "all_draft_store": [],
             "draft_ids": 0,
-            "root_path": str(jianying_drafts_root()),
+            "root_path": str(drafts_root),
         }
 
     draft_dir = draft_dir.resolve()
@@ -85,7 +90,7 @@ def register_in_jianying_root_meta(draft_dir: Path, draft_id: str, draft_name: s
         "draft_json_file": str(draft_dir / "draft_info.json"),
         "draft_name": draft_name,
         "draft_new_version": "",
-        "draft_root_path": str(jianying_drafts_root()),
+        "draft_root_path": str(drafts_root),
         "draft_timeline_materials_size": src_meta.get("draft_timeline_materials_size_", 0),
         "draft_type": "",
         "draft_web_article_video_enter_from": "",
@@ -104,7 +109,7 @@ def register_in_jianying_root_meta(draft_dir: Path, draft_id: str, draft_name: s
     store.insert(0, entry)
     root_meta["all_draft_store"] = store
     root_meta["draft_ids"] = len(store)
-    root_meta["root_path"] = str(jianying_drafts_root())
+    root_meta["root_path"] = str(drafts_root)
     save_json(root_meta_path, root_meta)
     print("  已注册到 root_meta_info.json")
 
@@ -219,15 +224,20 @@ def assign_new_jianying_draft_identity(
     return new_id
 
 
-def import_draft_to_jianying(src_draft: Path, jianying_name: str) -> Path:
+def import_draft_to_jianying(
+    src_draft: Path,
+    jianying_name: str,
+    drafts_root: str | Path | None = None,
+) -> Path:
     """复制本地草稿到剪映目录并注册。"""
+    drafts_root = jianying_drafts_root(drafts_root)
     src_draft = src_draft.resolve()
     if not src_draft.is_dir():
         raise FileNotFoundError(f"草稿目录不存在: {src_draft}")
     if not (src_draft / "draft_info.json").exists():
         raise FileNotFoundError(f"草稿不完整，缺少 draft_info.json: {src_draft}")
 
-    dst = jianying_drafts_root() / jianying_name
+    dst = drafts_root / jianying_name
     if dst.exists():
         shutil.rmtree(dst)
 
@@ -235,11 +245,11 @@ def import_draft_to_jianying(src_draft: Path, jianying_name: str) -> Path:
     shutil.copytree(src_draft, dst)
 
     print("[2/3] 重写路径 ...")
-    rewrite_draft_paths(dst, src_draft, jianying_drafts_root())
+    rewrite_draft_paths(dst, src_draft, drafts_root)
 
     print("[3/3] 生成独立草稿 ID 并注册到剪映 ...")
-    draft_id = assign_new_jianying_draft_identity(dst, jianying_drafts_root(), jianying_name)
-    register_in_jianying_root_meta(dst, draft_id, jianying_name)
+    draft_id = assign_new_jianying_draft_identity(dst, drafts_root, jianying_name)
+    register_in_jianying_root_meta(dst, draft_id, jianying_name, drafts_root)
     return dst
 
 
@@ -256,6 +266,11 @@ def main() -> None:
         required=True,
         help="导入后在剪映中显示的草稿名称（同时作为剪映目录下的文件夹名）",
     )
+    parser.add_argument(
+        "--jianying-drafts-root",
+        type=Path,
+        help="剪映草稿根目录（com.lveditor.draft）；Windows 上通常需手动指定",
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -265,12 +280,12 @@ def main() -> None:
     src = args.draft_dir.expanduser().resolve()
     print(f"\n源草稿: {src}")
 
-    dst = import_draft_to_jianying(src, args.jianying_name)
+    dst = import_draft_to_jianying(src, args.jianying_name, args.jianying_drafts_root)
     summarize_draft(dst)
 
     print("\n✓ 导入完成")
     print(f"  剪映草稿: {dst}")
-    print(f"  剪映根目录: {JIANYING_ROOT}")
+    print(f"  剪映草稿根目录: {jianying_drafts_root(args.jianying_drafts_root)}")
     print("  请重启剪映或刷新草稿列表查看")
 
 

@@ -19,7 +19,7 @@ bash scripts/fetch-ytdlp.sh
 npm run build:ytdlp
 ```
 
-`npm start` / `./build.sh` 会自动确保 `bin/yt-dlp` 存在，并随 Electron `extraResources` 打入 `.app`。
+`npm start` / `./build-mac.sh` 会自动确保 `bin/yt-dlp` 存在，并随 Electron `extraResources` 打入 `.app`。
 
 ## 本地测试
 

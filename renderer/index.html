@@ -111,7 +111,15 @@
           </div>
         </header>
         <div class="pipe-card-body hidden" id="import-body">
-          <p class="hint">将本地草稿写入剪映目录，列表中显示的名称由「草稿名称」决定。</p>
+          <label class="field">
+            <span class="field-label">剪映草稿目录</span>
+            <p class="field-hint">请选择剪映存放草稿的文件夹。通常为 <code>com.lveditor.draft</code>；若剪映装在自定义位置，请手动选择。</p>
+            <div class="field-row">
+              <input id="jianying-drafts-root" class="field-grow" type="text" placeholder="例如 .../JianyingPro/User Data/Projects/com.lveditor.draft" />
+              <button type="button" id="btn-pick-jianying-dir" class="btn-secondary">选择目录</button>
+            </div>
+          </label>
+          <p class="hint">将本地草稿写入上述目录，列表中显示的名称由「草稿名称」决定。</p>
           <details class="path-details hidden" id="import-path-details">
             <summary>路径详情</summary>
             <div id="import-paths" class="path-list"></div>

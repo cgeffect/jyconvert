@@ -10,5 +10,8 @@ contextBridge.exposeInMainWorld("jyconvert", {
   openInFinder: (targetPath) => ipcRenderer.invoke("open-in-finder", targetPath),
   openExternal: (url) => ipcRenderer.invoke("open-external", url),
   openDownloader: () => ipcRenderer.invoke("open-downloader-window"),
-  getJianyingDraftPath: (name) => ipcRenderer.invoke("jianying-draft-path", name),
+  getJianyingDraftPath: (opts) => ipcRenderer.invoke("jianying-draft-path", opts),
+  getJianyingDraftsRoot: () => ipcRenderer.invoke("get-jianying-drafts-root"),
+  setJianyingDraftsRoot: (draftsRoot) => ipcRenderer.invoke("set-jianying-drafts-root", draftsRoot),
+  pickJianyingDraftsDir: () => ipcRenderer.invoke("pick-jianying-drafts-dir"),
 });

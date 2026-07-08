@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -893,7 +894,17 @@ def find_timeline_cover_source(protocol: dict[str, Any], ctx: ConversionContext)
 
 
 def resolve_ffmpeg() -> str | None:
-    """查找 ffmpeg；PyInstaller / Electron 环境下 PATH 可能不含 Homebrew。"""
+    """查找 ffmpeg；优先使用 Electron 内嵌或 bin/ 下的打包版本。"""
+    env = os.environ.get("JYCONVERT_FFMPEG", "").strip()
+    if env and Path(env).is_file():
+        return env
+
+    project_root = JYCONVERT_ROOT.parent
+    for name in ("ffmpeg", "ffmpeg.exe"):
+        candidate = project_root / "bin" / name
+        if candidate.is_file():
+            return str(candidate)
+
     for candidate in (
         which("ffmpeg"),
         "/opt/homebrew/bin/ffmpeg",

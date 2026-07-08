@@ -8,10 +8,13 @@ cd "$ROOT"
 PYTHON_DIR="$ROOT/python"
 VENV_DIR="$PYTHON_DIR/.venv"
 OUT_BIN="$ROOT/bin/jyconvert-py"
-YTDLP_BIN="$ROOT/bin/yt-dlp"
 
 build_ytdlp() {
-  bash "$ROOT/scripts/fetch-ytdlp.sh"
+  bash "$ROOT/scripts/fetch-ytdlp-mac.sh"
+}
+
+build_ffmpeg() {
+  node "$ROOT/scripts/fetch-ffmpeg.js"
 }
 
 build_python() {
@@ -45,13 +48,19 @@ if [[ "${1:-}" == "--ytdlp-only" ]]; then
   exit 0
 fi
 
+if [[ "${1:-}" == "--ffmpeg-only" ]]; then
+  build_ffmpeg
+  exit 0
+fi
+
 echo "==> [1/5] npm install"
 npm install
 
 build_python
 build_ytdlp
+build_ffmpeg
 
-echo "==> [4/5] 打包 Electron App"
+echo "==> [4/5] 打包 Electron App (macOS)"
 npx electron-builder --mac
 
 echo ""

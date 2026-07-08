@@ -3,26 +3,32 @@ const { spawn } = require("child_process");
 const {
   pythonRoot,
   bundledPythonBinary,
+  bundledFfmpegBinary,
   pythonCommand,
   assertPythonReady,
 } = require("./paths");
 
 const path = require("path");
 
-/** App 内嵌进程默认 PATH 不含 Homebrew，需补上以便找到 ffmpeg */
-function spawnEnv() {
-  const extra = ["/opt/homebrew/bin", "/usr/local/bin"].filter((dir) => fs.existsSync(dir));
-  if (!extra.length) {
-    return process.env;
+function spawnEnv(extra = {}) {
+  const env = { ...process.env, ...extra };
+  const homebrew = ["/opt/homebrew/bin", "/usr/local/bin"].filter((dir) => fs.existsSync(dir));
+  if (homebrew.length) {
+    env.PATH = `${homebrew.join(":")}:${env.PATH || ""}`;
   }
-  return { ...process.env, PATH: `${extra.join(":")}:${process.env.PATH || ""}` };
+  const ffmpeg = bundledFfmpegBinary();
+  if (ffmpeg) {
+    env.JYCONVERT_FFMPEG = ffmpeg;
+  }
+  return env;
 }
 
 function spawnProcess(cmd, args, options = {}) {
+  const { env: extraEnv, ...rest } = options;
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
-      env: spawnEnv(),
-      ...options,
+      ...rest,
+      env: spawnEnv(extraEnv),
     });
 
     let stdout = "";
@@ -77,13 +83,17 @@ function convertDraft({ protocolPath, resourceRoot, draftName, outputDir }) {
   ]);
 }
 
-function importDraft({ draftDir, jianyingName }) {
-  return runCli("import", [
+function importDraft({ draftDir, jianyingName, jianyingDraftsRoot }) {
+  const args = [
     "--draft-dir",
     draftDir,
     "--jianying-name",
     jianyingName,
-  ]);
+  ];
+  if (jianyingDraftsRoot) {
+    args.push("--jianying-drafts-root", jianyingDraftsRoot);
+  }
+  return runCli("import", args);
 }
 
 module.exports = { convertDraft, importDraft, runCli };
