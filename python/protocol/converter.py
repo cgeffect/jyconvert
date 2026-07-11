@@ -849,81 +849,86 @@ def build_draft_meta_info(draft_info: dict[str, Any], ctx: ConversionContext, dr
 
 
 def find_timeline_cover_source(protocol: dict[str, Any], ctx: ConversionContext) -> tuple[Path, float] | None:
-    """取时间轴上最早出现的视频片段，用其源素材文件的第一帧做封面。"""
-    best_seg: dict[str, Any] | None = None
-    best_start: int | None = None
-
+    """取第一条视频轨上最早片段的源素材第一帧做封面。"""
     for track in protocol.get("tracks", []):
         if track.get("type") != "video":
             continue
-        for seg in track.get("segments", []):
-            target_start = seg.get("target_timerange", {}).get("start", 0)
-            if best_start is None or target_start < best_start:
-                best_start = target_start
-                best_seg = seg
-
-    if not best_seg:
-        return None
-
-    capcut_mat_id = ctx.id_map.get(best_seg.get("material_id", ""))
-    if not capcut_mat_id:
-        return None
-
-    for item in ctx.videos:
-        if item.get("id") != capcut_mat_id:
+        segments = [s for s in track.get("segments", []) if s.get("visible", True)]
+        if not segments:
             continue
-        path = item.get("path")
-        if not path:
+        best_seg = min(
+            segments,
+            key=lambda s: s.get("target_timerange", {}).get("start", 0),
+        )
+
+        capcut_mat_id = ctx.id_map.get(best_seg.get("material_id", ""))
+        if not capcut_mat_id:
             return None
-        video_path = Path(path)
-        if not video_path.exists():
-            return None
-        if item.get("type") != "video":
-            return None
-        return video_path, 0.0
+
+        for item in ctx.videos:
+            if item.get("id") != capcut_mat_id:
+                continue
+            path = item.get("path")
+            if not path:
+                return None
+            video_path = Path(path)
+            if not video_path.exists():
+                return None
+            if item.get("type") != "video":
+                return None
+            return video_path, 0.0
+        return None
 
     return None
 
 
-def resolve_ffmpeg() -> str | None:
-    """查找 ffmpeg；优先使用 Electron 内嵌或 bin/ 下的打包版本。"""
-    env = os.environ.get("JYCONVERT_FFMPEG", "").strip()
-    if env and Path(env).is_file():
-        return env
+def iter_ffmpeg_candidates() -> list[str]:
+    """按优先级列出 ffmpeg 路径，仅返回实测可执行的版本。"""
+    seen: set[str] = set()
+    ordered: list[str] = []
+
+    def add(raw: str | None) -> None:
+        if not raw:
+            return
+        path = str(Path(raw).resolve())
+        if path in seen or not Path(path).is_file():
+            return
+        seen.add(path)
+        ordered.append(path)
+
+    add(os.environ.get("JYCONVERT_FFMPEG", "").strip())
 
     project_root = JYCONVERT_ROOT.parent
     for name in ("ffmpeg", "ffmpeg.exe"):
-        candidate = project_root / "bin" / name
-        if candidate.is_file():
-            return str(candidate)
+        add(str(project_root / "bin" / name))
 
-    for candidate in (
-        which("ffmpeg"),
-        "/opt/homebrew/bin/ffmpeg",
-        "/usr/local/bin/ffmpeg",
-    ):
-        if candidate and Path(candidate).is_file():
-            return candidate
-    return None
+    add(which("ffmpeg"))
+    add("/opt/homebrew/bin/ffmpeg")
+    add("/usr/local/bin/ffmpeg")
 
-
-def find_fallback_cover(ctx: ConversionContext) -> Path | None:
-    """ffmpeg 不可用时，用已导入的图片或内置占位图生成封面。"""
-    for pattern in ("*.png", "*.gif", "*.jpg", "*.jpeg"):
-        for img in sorted(ctx.imported_dir.glob(pattern)):
-            return img
-    placeholder = JYCONVERT_ROOT / "templates" / "draft_cover.placeholder.jpg"
-    if placeholder.is_file():
-        return placeholder
-    return None
+    working: list[str] = []
+    for candidate in ordered:
+        try:
+            subprocess.run(
+                [candidate, "-version"],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=8,
+            )
+            working.append(candidate)
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            continue
+    return working
 
 
-def generate_draft_cover(source: Path, output: Path, time_sec: float = 0.0) -> None:
-    """用 ffmpeg 从视频源素材截取一帧写入 draft_cover.jpg。"""
-    ffmpeg = resolve_ffmpeg()
-    if not ffmpeg:
-        raise FileNotFoundError("ffmpeg")
+def resolve_ffmpeg() -> str | None:
+    """返回首个可用的 ffmpeg。"""
+    candidates = iter_ffmpeg_candidates()
+    return candidates[0] if candidates else None
 
+
+def _run_ffmpeg_cover(ffmpeg: str, source: Path, output: Path, time_sec: float) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     time_label = f"{max(0.0, time_sec):.3f}"
     cmd = [
@@ -940,9 +945,59 @@ def generate_draft_cover(source: Path, output: Path, time_sec: float = 0.0) -> N
         "1",
         "-q:v",
         "2",
+        "-f",
+        "image2",
         str(output),
     ]
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True, capture_output=True)
+
+
+def _write_image_cover(source: Path, output: Path) -> None:
+    """将任意图片转为 JPEG 封面。"""
+    if source.suffix.lower() in {".jpg", ".jpeg"}:
+        try:
+            with open(source, "rb") as fh:
+                if fh.read(3) == b"\xff\xd8\xff":
+                    shutil.copy2(source, output)
+                    return
+        except OSError:
+            pass
+
+    last_exc: Exception | None = None
+    for ffmpeg in iter_ffmpeg_candidates():
+        try:
+            _run_ffmpeg_cover(ffmpeg, source, output, 0.0)
+            return
+        except (OSError, subprocess.CalledProcessError) as exc:
+            last_exc = exc
+    if last_exc:
+        raise last_exc
+    raise FileNotFoundError("ffmpeg")
+
+
+def find_fallback_cover(ctx: ConversionContext) -> Path | None:
+    """ffmpeg 截帧失败时，尝试用已导入图片或内置占位图。"""
+    for pattern in ("*.jpg", "*.jpeg", "*.png", "*.gif"):
+        for img in sorted(ctx.imported_dir.glob(pattern)):
+            return img
+    placeholder = JYCONVERT_ROOT / "templates" / "draft_cover.placeholder.jpg"
+    if placeholder.is_file():
+        return placeholder
+    return None
+
+
+def generate_draft_cover(source: Path, output: Path, time_sec: float = 0.0) -> None:
+    """用 ffmpeg 从视频源素材截取一帧写入 draft_cover.jpg。"""
+    last_exc: Exception | None = None
+    for ffmpeg in iter_ffmpeg_candidates():
+        try:
+            _run_ffmpeg_cover(ffmpeg, source, output, time_sec)
+            return
+        except (OSError, subprocess.CalledProcessError) as exc:
+            last_exc = exc
+    if last_exc:
+        raise last_exc
+    raise FileNotFoundError("ffmpeg")
 
 
 def write_draft_cover(protocol: dict[str, Any], ctx: ConversionContext) -> bool:
@@ -951,8 +1006,11 @@ def write_draft_cover(protocol: dict[str, Any], ctx: ConversionContext) -> bool:
     if not source:
         fallback = find_fallback_cover(ctx)
         if fallback:
-            shutil.copy2(fallback, cover_path)
-            return True
+            try:
+                _write_image_cover(fallback, cover_path)
+                return True
+            except OSError as exc:
+                ctx.warnings.append(f"生成备用封面失败: {fallback.name} ({exc})")
         ctx.warnings.append("未找到视频素材，无法生成草稿封面")
         return False
 
@@ -963,10 +1021,16 @@ def write_draft_cover(protocol: dict[str, Any], ctx: ConversionContext) -> bool:
     except (OSError, subprocess.CalledProcessError) as exc:
         fallback = find_fallback_cover(ctx)
         if fallback:
-            shutil.copy2(fallback, cover_path)
-            ctx.warnings.append(
-                f"ffmpeg 生成封面失败，已使用备用封面: {video_path.name} ({exc})",
-            )
-            return True
+            try:
+                _write_image_cover(fallback, cover_path)
+                ctx.warnings.append(
+                    f"ffmpeg 生成封面失败，已使用备用封面: {video_path.name} ({exc})",
+                )
+                return True
+            except OSError as img_exc:
+                ctx.warnings.append(
+                    f"生成草稿封面失败: {video_path.name} ({exc}); 备用封面也失败 ({img_exc})",
+                )
+                return False
         ctx.warnings.append(f"生成草稿封面失败: {video_path.name} ({exc})")
         return False
