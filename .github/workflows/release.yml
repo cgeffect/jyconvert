@@ -77,13 +77,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ github.ref_name }}"
-          ASSET_IDS=$(gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets[].id' 2>/dev/null || true)
+          REPO="${{ github.repository }}"
+          if ! gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release $TAG 不存在，跳过清理旧资源"
+            exit 0
+          fi
+          ASSET_IDS=$(gh release view "$TAG" --repo "$REPO" --json assets -q '.assets[].id' 2>/dev/null || true)
           for id in $ASSET_IDS; do
-            [ -n "$id" ] && gh api --method DELETE "/repos/${{ github.repository }}/releases/assets/${id}"
+            if [ -n "$id" ]; then
+              gh api --method DELETE "/repos/${REPO}/releases/assets/${id}" || true
+            fi
           done
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          overwrite_assets: true
           files: artifacts/**/*
