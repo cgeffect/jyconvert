@@ -81,11 +81,13 @@ def resolve_scaffold_source() -> Path:
 
 def convert_protocol(
     protocol_path: Path,
-    resource_root: Path,
+    resource_root: Path | None,
     draft_name: str,
     output: str,
     register: bool,
 ) -> Path:
+    protocol_path = protocol_path.resolve()
+    resource_root = (resource_root or protocol_path.parent).resolve()
     protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
     if output == "capcut":
         drafts_root = capcut_drafts_root()
@@ -150,8 +152,8 @@ def main() -> None:
     parser.add_argument(
         "--resource-root",
         type=Path,
-        required=True,
-        help="媒体资源根目录（协议内 ./assets/、./old_protocol/ 等相对路径相对它解析）",
+        default=None,
+        help="可选；默认使用协议 JSON 所在目录（协议内 ./assets/、./abc/ 等相对它解析）",
     )
     parser.add_argument(
         "--name",
@@ -173,8 +175,9 @@ def main() -> None:
 
     if not args.protocol.exists():
         raise FileNotFoundError(f"协议文件不存在: {args.protocol}")
-    if not args.resource_root.exists():
-        raise FileNotFoundError(f"资源根目录不存在: {args.resource_root}")
+    resource_root = (args.resource_root or args.protocol.parent).resolve()
+    if not resource_root.exists():
+        raise FileNotFoundError(f"资源根目录不存在: {resource_root}")
 
     print("=" * 60)
     print("NGLEngine 协议 → CapCut 草稿")
@@ -182,7 +185,7 @@ def main() -> None:
 
     draft_dir = convert_protocol(
         protocol_path=args.protocol,
-        resource_root=args.resource_root,
+        resource_root=resource_root,
         draft_name=args.name,
         output=args.output,
         register=(args.output == "capcut" and not args.no_register),

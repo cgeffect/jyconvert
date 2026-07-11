@@ -15,6 +15,7 @@ from typing import Any, Literal
 from capcut.lib import new_uuid, now_us
 
 from app_root import python_root
+from protocol.path_resolver import resolve_protocol_path as resolve_media_path
 
 JYCONVERT_ROOT = python_root()
 
@@ -99,21 +100,12 @@ def ratio_from_canvas(width: int, height: int) -> str:
 
 
 def resolve_protocol_path(raw: str, ctx: ConversionContext) -> Path | None:
-    if not raw:
-        return None
-    p = Path(raw)
-    if p.is_absolute() and p.exists():
-        return p.resolve()
-
-    candidates = [
-        ctx.protocol_path.parent / raw,
-        ctx.resource_root / raw.lstrip("./"),
-        ctx.resource_root.parent / raw.lstrip("./"),
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate.resolve()
-    return None
+    """协议 path 优先相对协议 JSON 所在目录解析。"""
+    return resolve_media_path(
+        raw,
+        ctx.protocol_path.parent,
+        extra_roots=[ctx.resource_root, ctx.resource_root.parent],
+    )
 
 
 def import_file(src: Path, ctx: ConversionContext, subdir: str = "imported") -> Path:

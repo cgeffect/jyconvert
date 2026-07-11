@@ -139,11 +139,13 @@ def sync_timeline_cover(draft_dir: Path, timeline_id: str) -> None:
 
 def convert_protocol_to_local_draft(
     protocol_path: Path,
-    resource_root: Path,
+    resource_root: Path | None,
     draft_name: str,
     output_root: Path,
 ) -> Path:
     """将 NGL 协议转为剪映草稿格式，写入本地目录（不触碰剪映安装目录）。"""
+    protocol_path = protocol_path.resolve()
+    resource_root = (resource_root or protocol_path.parent).resolve()
     protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
     drafts_root = output_root.resolve()
     draft_dir = drafts_root / draft_name

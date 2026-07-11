@@ -21,6 +21,7 @@ hiddenimports = [
     "jianying.lib",
     "protocol",
     "protocol.converter",
+    "protocol.path_resolver",
 ]
 
 a = Analysis(

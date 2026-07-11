@@ -63,6 +63,7 @@ web/modules/ngl-wasm/dist/*.js
 /node_modules/
 /dist/
 /python/**/__pycache__/
+python/jianying/draft_decrypt_helper
 /bin/
 /bin/yt-dlp.app/
 

@@ -31,8 +31,8 @@ def main() -> None:
     parser.add_argument(
         "--resource-root",
         type=Path,
-        required=True,
-        help="媒体资源根目录（协议内 ./assets/ 等相对路径相对它解析）",
+        default=None,
+        help="可选；媒体资源根目录。默认使用协议 JSON 所在目录（协议内 ./assets/、./abc/ 等相对它解析）",
     )
     parser.add_argument("--name", required=True, help="本地草稿目录名")
     parser.add_argument(
@@ -45,8 +45,9 @@ def main() -> None:
 
     if not args.protocol.exists():
         raise FileNotFoundError(f"协议文件不存在: {args.protocol}")
-    if not args.resource_root.exists():
-        raise FileNotFoundError(f"资源根目录不存在: {args.resource_root}")
+    resource_root = (args.resource_root or args.protocol.parent).resolve()
+    if not resource_root.exists():
+        raise FileNotFoundError(f"资源根目录不存在: {resource_root}")
 
     output_root = args.output_dir.resolve()
 
@@ -56,7 +57,7 @@ def main() -> None:
 
     draft_dir = convert_protocol_to_local_draft(
         protocol_path=args.protocol,
-        resource_root=args.resource_root,
+        resource_root=resource_root,
         draft_name=args.name,
         output_root=output_root,
     )

@@ -36,26 +36,74 @@ function findProtocolJson(rootDir) {
   return null;
 }
 
-/** 找到含 assets/ 或 fonts/ 的资源根目录（协议 JSON 可能在子目录） */
-function resolveResourceRoot(protocolPath, packageDir) {
-  let dir = path.resolve(path.dirname(protocolPath));
-  const root = path.resolve(packageDir);
-
-  while (dir === root || dir.startsWith(`${root}${path.sep}`)) {
-    if (
-      fs.existsSync(path.join(dir, "assets"))
-      || fs.existsSync(path.join(dir, "fonts"))
-    ) {
-      return dir;
-    }
-    const parent = path.dirname(dir);
-    if (parent === dir) {
-      break;
-    }
-    dir = parent;
+/** 协议内媒体路径相对协议 JSON 所在目录解析 */
+function resolveProtocolPath(raw, protocolDir) {
+  if (!raw || typeof raw !== "string") {
+    return null;
   }
+  if (path.isAbsolute(raw)) {
+    return fs.existsSync(raw) ? raw : null;
+  }
+  const rel = raw.replace(/^\.\//, "");
+  const candidates = [
+    path.join(protocolDir, raw),
+    path.join(protocolDir, rel),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
 
-  return path.dirname(protocolPath);
+function collectProtocolMediaPaths(protocol) {
+  const paths = [];
+  const materials = protocol.materials || {};
+  for (const category of ["videos", "audios", "images"]) {
+    for (const item of materials[category] || []) {
+      if (item.path) {
+        paths.push(item.path);
+      }
+    }
+  }
+  for (const item of materials.texts || []) {
+    try {
+      const content = JSON.parse(item.content || "{}");
+      for (const style of content.styles || []) {
+        const fontPath = style.font && style.font.path;
+        if (fontPath) {
+          paths.push(fontPath);
+        }
+      }
+    } catch {
+      // ignore malformed rich text
+    }
+  }
+  return paths;
+}
+
+/** 资源根目录 = 协议 JSON 所在目录（./assets/、./abc/ 等相对它解析） */
+function resolveResourceRoot(protocolPath) {
+  return path.resolve(path.dirname(protocolPath));
+}
+
+function validateProtocolPackage(protocolPath, protocol) {
+  const protocolDir = resolveResourceRoot(protocolPath);
+  const mediaPaths = collectProtocolMediaPaths(protocol);
+  if (!mediaPaths.length) {
+    return;
+  }
+  const missing = mediaPaths.filter((rel) => !resolveProtocolPath(rel, protocolDir));
+  if (missing.length) {
+    throw new Error(
+      "素材包不完整：协议引用的媒体文件未找到。\n"
+      + `  协议: ${protocolPath}\n`
+      + `  协议目录: ${protocolDir}\n`
+      + `  缺失示例: ${missing.slice(0, 3).join(", ")}`
+      + (missing.length > 3 ? ` …共 ${missing.length} 个` : ""),
+    );
+  }
 }
 
 function extractZip(zipPath) {
@@ -80,16 +128,9 @@ function extractZip(zipPath) {
     throw new Error(`在压缩包中未找到协议 JSON（需含 materials、tracks 字段）: ${packageDir}`);
   }
 
-  const resourceRoot = resolveResourceRoot(protocolPath, packageDir);
-  const assetsDir = path.join(resourceRoot, "assets");
-  if (!fs.existsSync(assetsDir)) {
-    throw new Error(
-      `素材包不完整：未找到 assets/ 目录。\n`
-      + `  解压目录: ${packageDir}\n`
-      + `  协议: ${protocolPath}\n`
-      + `  请确认 zip 内包含 assets/、fonts/ 与协议 JSON。`,
-    );
-  }
+  const protocol = JSON.parse(fs.readFileSync(protocolPath, "utf-8"));
+  validateProtocolPackage(protocolPath, protocol);
+  const resourceRoot = resolveResourceRoot(protocolPath);
 
   return {
     zipPath: absZip,
@@ -101,4 +142,12 @@ function extractZip(zipPath) {
   };
 }
 
-module.exports = { extractZip, findProtocolJson, isProtocolJson, resolveResourceRoot };
+module.exports = {
+  extractZip,
+  findProtocolJson,
+  isProtocolJson,
+  resolveResourceRoot,
+  resolveProtocolPath,
+  collectProtocolMediaPaths,
+  validateProtocolPackage,
+};

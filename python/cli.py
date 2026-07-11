@@ -25,8 +25,9 @@ from jianying.import_draft import import_draft_to_jianying
 def cmd_convert(args: argparse.Namespace) -> None:
     if not args.protocol.exists():
         raise FileNotFoundError(f"协议文件不存在: {args.protocol}")
-    if not args.resource_root.exists():
-        raise FileNotFoundError(f"资源根目录不存在: {args.resource_root}")
+    resource_root = (args.resource_root or args.protocol.parent).resolve()
+    if not resource_root.exists():
+        raise FileNotFoundError(f"资源根目录不存在: {resource_root}")
 
     output_root = args.output_dir.resolve()
     print("=" * 60)
@@ -35,7 +36,7 @@ def cmd_convert(args: argparse.Namespace) -> None:
 
     draft_dir = convert_protocol_to_local_draft(
         protocol_path=args.protocol,
-        resource_root=args.resource_root,
+        resource_root=resource_root,
         draft_name=args.name,
         output_root=output_root,
     )
@@ -70,7 +71,7 @@ def main() -> None:
 
     p_convert = sub.add_parser("convert", help="协议 → 本地剪映草稿")
     p_convert.add_argument("--protocol", type=Path, required=True)
-    p_convert.add_argument("--resource-root", type=Path, required=True)
+    p_convert.add_argument("--resource-root", type=Path, default=None)
     p_convert.add_argument("--name", required=True)
     p_convert.add_argument("--output-dir", type=Path, required=True)
     p_convert.set_defaults(func=cmd_convert)
